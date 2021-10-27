@@ -1,0 +1,17 @@
+{
+  "name": "b13/typo3-config",
+  "description": "Fluent API to set environment-specific configuration for TYPO3",
+  "license": "GPL-2.0+",
+  "require": {
+    "php": "^7.2 || ~8.0",
+    "typo3/cms-core": "^9.5.14 || ^10.0.0 || ^11.0.0"
+  },
+  "autoload": {
+    "psr-0": {
+      "B13\\": "src"
+    }
+  },
+  "require-dev": {
+    "typo3/coding-standards": "^0.4.0"
+  }
+}
