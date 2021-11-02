@@ -20,36 +20,37 @@ With our configuration class, TYPO3's "AdditionalConfiguration"
     <?php
 
         \B13\Config::initialize()
+            ->appendContextToSiteName()
             ->includeContextDependentConfigurationFiles();
 
 This sets some sensible defaults (see below), and also checks
 for the existence of the following files:
 
 ```
-config/development.php
-config/production.php
+config/system/development.php
+config/system/production.php
 ```
 
 If you have a TYPO3_CONTEXT with Subcontexts such as "Production/QA"
-then the file `config/production/qa.php` is also included,
-in addition to `config/production.php`.
+then the file `config/system/production/qa.php` is also included,
+in addition to `config/system/production.php`.
 
 ### Reason 2: We don't want to repeat the same "best b13 practice"
 
 The `initialize()` method sets sensible defaults for a specific environment,
-also adds the actual TYPO3_CONTEXT to the Project Name (e.g. "My Site - Development"),
 activates debugging for Development environments, and deactivates deprecation
 logging in production by default.
 
 b13 uses DDEV-Local for local environments, however, it is somehow
-tedious to maintain the same configuration over and over again.  If DDEV-Local
-is in use, `initialize` automatically sets the respective  settings for
+tedious to maintain the same configuration over and over again. If DDEV-Local
+is in use, `initialize` automatically sets the respective settings for
 DDEV-Local environments.
 
 If you want to avoid any kind of magic, you can just use this in your AdditionalConfiguration file.
 
     <?php
         \B13\Config::initialize(false)
+            ->appendContextToSiteName()
             ->includeContextDependentConfigurationFiles();
 
 On top, the API ships with useful helper methods which we accustomed

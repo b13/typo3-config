@@ -17,6 +17,7 @@ use TYPO3\CMS\Core\Core\ApplicationContext;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Log\LogLevel;
+use TYPO3\CMS\Core\Log\Writer\FileWriter;
 
 /**
  * Class to use in your configuration files of a TYPO3 project.
@@ -59,20 +60,19 @@ class Config
     }
 
     /**
-     * @param bool $includeAutomatedLoader
+     * @param bool $applyDefaults
      * @return static
      */
-    public static function initialize(bool $includeAutomatedLoader = true): self
+    public static function initialize(bool $applyDefaults = true): self
     {
         // Late static binding
         self::$instance = new static();
-        if ($includeAutomatedLoader === false) {
+        if ($applyDefaults === false) {
             return self::$instance;
         }
-        self::$instance
+        return self::$instance
             // use sensible default based on Context
-            ->applyDefaults()
-            ->appendContextToSiteName();
+            ->applyDefaults();
     }
 
     /**
@@ -124,7 +124,7 @@ class Config
         } while (($currentContext = $currentContext->getParent()));
         $orderedListOfContextNames = array_reverse($orderedListOfContextNames);
         foreach ($orderedListOfContextNames as $contextName) {
-            $contextConfigFilePath = $this->configPath . '/' . strtolower($contextName) . '.php';
+            $contextConfigFilePath = $this->configPath . '/system/' . strtolower($contextName) . '.php';
             if (file_exists($contextConfigFilePath)) {
                 require($contextConfigFilePath);
             }
@@ -152,12 +152,37 @@ class Config
         return $this;
     }
 
+    /**
+     * Default settings for production, can be overridden again in each project / production.php
+     * @return $this
+     */
     public function useProductionPreset(): self
     {
         $GLOBALS['TYPO3_CONF_VARS']['BE']['debug'] = false;
         $GLOBALS['TYPO3_CONF_VARS']['FE']['debug'] = false;
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['devIPmask'] = '';
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['displayErrors'] = -1;
+        // @todo: use constants for better readability
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['belogErrorReporting'] = 4437;
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['exceptionalErrors'] = 4437;
+        $this->disableDeprecationLogging();
+        $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'] = array_replace_recursive(
+            [
+                LogLevel::DEBUG => [
+                    FileWriter::class => ['disabled' => true]
+                ],
+                LogLevel::INFO => [
+                    FileWriter::class => ['disabled' => true]
+                ],
+                LogLevel::WARNING => [
+                    FileWriter::class => ['disabled' => true]
+                ],
+                LogLevel::ERROR => [
+                    FileWriter::class => ['disabled' => true]
+                ],
+            ],
+            $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration']
+        );
         return $this;
     }
 
@@ -167,13 +192,20 @@ class Config
         $GLOBALS['TYPO3_CONF_VARS']['FE']['debug'] = true;
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['devIPmask'] = '*';
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['displayErrors'] = 1;
-        $GLOBALS['TYPO3_CONF_VARS']['SYS']['trustedHostsPattern'] = '.*.*';
+        // @todo: use constants for better readability
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['belogErrorReporting'] = 32767;
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['exceptionalErrors'] = 32767;
         $this->enableDeprecationLogging();
+        // Log warnings to files
+        $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'][LogLevel::WARNING] = [
+            FileWriter::class => ['disabled' => false]
+        ];
         return $this;
     }
 
     public function useDDEVConfiguration(): self
     {
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['trustedHostsPattern'] = '.*.*';
         $this
             ->initializeDatabaseConnection(
                 [
@@ -239,7 +271,7 @@ class Config
         return $this;
     }
 
-    public function addQueryParameterForCacheHashCalculation(string $queryParameter): self
+    public function excludeQueryParameterForCacheHashCalculation(string $queryParameter): self
     {
         $GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = $queryParameter;
         return $this;
@@ -264,6 +296,30 @@ class Config
     {
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['productionExceptionHandler'] = $productionExceptionHandlerClassName;
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['debugExceptionHandler'] = $debugExceptionHandlerClassName;
+        return $this;
+    }
+
+    /**
+     * Configures a log file for solr based on the TYPO3 Context, with a separate file for solr.
+     *
+     * @param string $fileName
+     * @param string|null $forceLogLevel
+     * @return $this
+     */
+    public function autoconfigureSolrLogging(string $fileName = 'solr.log', string $forceLogLevel = null): self
+    {
+        if ($forceLogLevel !== null) {
+            $logLevel = $forceLogLevel;
+        } else {
+            $logLevel = $this->context->isProduction() ? LogLevel::ERROR : LogLevel::DEBUG;
+        }
+        $GLOBALS['TYPO3_CONF_VARS']['LOG']['ApacheSolrForTypo3']['Solr']['writerConfiguration'] = [
+            $logLevel => [
+                FileWriter::class => [
+                    'logFile' => $this->varPath . '/log/' . $fileName
+                ]
+            ],
+        ];
         return $this;
     }
 
@@ -301,6 +357,13 @@ class Config
         return $this;
     }
 
+    /**
+     * Useful for distributed systems to put caches outside of an NFS mount.
+     *
+     * @param string $path
+     * @param array|null $applyForCaches
+     * @return $this
+     */
     public function setAlternativeCachePath(string $path, array $applyForCaches = null): self
     {
         $applyForCaches = $applyForCaches ?? [
@@ -312,5 +375,6 @@ class Config
         foreach ($applyForCaches as $cacheName) {
             $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations'][$cacheName]['options']['cacheDirectory'] = $path;
         }
+        return $this;
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 \B13\Config::initialize()
+    ->appendContextToSiteName()
     ->initializeDatabaseConnection(
         [
             'dbname' => getenv('TYPO3_DB_DATABASE'),
