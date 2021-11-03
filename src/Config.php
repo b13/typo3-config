@@ -146,8 +146,8 @@ class Config
     public function initializeDatabaseConnection(array $options = null, $connectionName = 'Default'): self
     {
         $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections'][$connectionName] = array_replace_recursive(
-            $options,
-            $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections'][$connectionName]
+            $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections'][$connectionName],
+            $options
         );
         return $this;
     }
