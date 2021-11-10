@@ -90,7 +90,7 @@ class Config
             ->forbidInvalidCacheHashQueryParameter()
             ->forbidNoCacheQueryParameter();
 
-        if (self::$instance->context->isDevelopment()) {
+        if (self::$instance->context->isDevelopment() || self::$instance->context->isTesting()) {
             self::$instance->useDevelopmentPreset();
             if (self::$instance->ddevEnvironment) {
                 self::$instance->useDDEVConfiguration();
