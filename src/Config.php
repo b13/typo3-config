@@ -178,7 +178,7 @@ class Config
                     FileWriter::class => ['disabled' => true]
                 ],
                 LogLevel::ERROR => [
-                    FileWriter::class => ['disabled' => true]
+                    FileWriter::class => ['disabled' => false]
                 ],
             ],
             $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration']
