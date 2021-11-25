@@ -203,14 +203,14 @@ class Config
         return $this;
     }
 
-    public function useDDEVConfiguration(): self
+    public function useDDEVConfiguration(string $dbHost = null): self
     {
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['trustedHostsPattern'] = '.*.*';
         $this
             ->initializeDatabaseConnection(
                 [
                     'dbname' => 'db',
-                    'host' => 'db',
+                    'host' => $dbHost ?? ('ddev-' . getenv('DDEV_PROJECT') . '-db'),
                     'password' => 'db',
                     'port' => '3306',
                     'user' => 'db',
