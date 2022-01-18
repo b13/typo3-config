@@ -162,9 +162,8 @@ class Config
         $GLOBALS['TYPO3_CONF_VARS']['FE']['debug'] = false;
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['devIPmask'] = '';
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['displayErrors'] = -1;
-        // @todo: use constants for better readability
-        $GLOBALS['TYPO3_CONF_VARS']['SYS']['belogErrorReporting'] = 4437;
-        $GLOBALS['TYPO3_CONF_VARS']['SYS']['exceptionalErrors'] = 4437;
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['belogErrorReporting'] = E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR;
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['exceptionalErrors'] = E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR;
         $this->disableDeprecationLogging();
         $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'] = array_replace_recursive(
             [
@@ -192,9 +191,8 @@ class Config
         $GLOBALS['TYPO3_CONF_VARS']['FE']['debug'] = true;
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['devIPmask'] = '*';
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['displayErrors'] = 1;
-        // @todo: use constants for better readability
-        $GLOBALS['TYPO3_CONF_VARS']['SYS']['belogErrorReporting'] = 32767;
-        $GLOBALS['TYPO3_CONF_VARS']['SYS']['exceptionalErrors'] = 32767;
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['belogErrorReporting'] = E_ALL;
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['exceptionalErrors'] = E_ALL;
         $this->enableDeprecationLogging();
         // Log warnings to files
         $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'][LogLevel::WARNING] = [
