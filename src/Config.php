@@ -215,7 +215,7 @@ class Config
                 ]
             )
             ->useImageMagick()
-            ->useMailhog(getenv('MH_SMTP_BIND_ADDR'));
+            ->useMailhog((string)getenv('MH_SMTP_BIND_ADDR'));
         return $this;
     }
 
