@@ -214,8 +214,13 @@ class Config
                     'user' => 'db',
                 ]
             )
-            ->useImageMagick()
-            ->useMailhog(getenv('MH_SMTP_BIND_ADDR'));
+            ->useImageMagick();
+
+        $mailhogSmtpBindAddr = getenv('MH_SMTP_BIND_ADDR');
+        if (is_string($mailhogSmtpBindAddr) && $mailhogSmtpBindAddr !== '') {
+            $this->useMailhog($mailhogSmtpBindAddr);
+        }
+
         return $this;
     }
 
