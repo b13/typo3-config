@@ -12,6 +12,12 @@ makes our life a bit easier when setting global `$TYPO3_CONF_VARS` settings,
 which usually takes place in LocalConfiguration, AdditionalConfiguration
 and the extensions' `ext_localconf.php` files.
 
+### Note using TYPO3 v12
+
+The configuration files LocalConfiguration and AdditionalConfiguration
+have been moved and renamed, s.
+[Configuration files](https://docs.typo3.org/m/typo3/reference-coreapi/main/en-us/Configuration/ConfigurationFiles.html)
+
 ### Reason 1: We want context-dependent config files
 
 With our configuration class, TYPO3's "AdditionalConfiguration"
