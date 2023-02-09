@@ -270,7 +270,7 @@ class Config
 
     public function forbidInvalidCacheHashQueryParameter(): self
     {
-        $GLOBALS['TYPO3_CONF_VARS']['FE']['disableNoCacheParameter'] = true;
+        $GLOBALS['TYPO3_CONF_VARS']['FE']['pageNotFoundOnCHashError'] = true;
         return $this;
     }
 
