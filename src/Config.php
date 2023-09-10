@@ -382,6 +382,29 @@ class Config
     }
 
     /**
+     * Set PHP configuration settings.
+     *
+     * Example:
+     * \B13\Config::get()->setPhpSettings([
+     *      'max_execution_time' => 1000,
+     *      'max_input_time' => 1000,
+     *      'post_max_size' => '100M',
+     *      'upload_max_filesize' => '100M',
+     *  ]);
+     *
+     * @param array $settings An associative array of PHP settings.
+     * @return $this
+     */
+    public function setPhpSettings(array $settings): self
+    {
+        foreach ($settings as $key => $value) {
+            ini_set($key, $value);
+        }
+
+        return $this;
+    }
+
+    /**
      * Override or append TYPO3 configuration settings for a given path with key-value pairs.
      *
      * Examples:
