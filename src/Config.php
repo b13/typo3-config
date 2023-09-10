@@ -380,4 +380,39 @@ class Config
         }
         return $this;
     }
+
+    /**
+     * Override or append TYPO3 configuration settings for a given path with key-value pairs.
+     *
+     * Examples:
+     * \B13\Config::get()->setConfigPathValues('EXTENSIONS/alterations', ['just-a-test' => 'test']);
+     * \B13\Config::get()->setConfigPathValues(
+     *   'SYS',
+     *   [
+     *      'just-a-test' => 'test',
+     *      'defaultScheme' => 'https'
+     *   ]);
+     *
+     * @param string $configPath A string representing the path to the configuration option.
+     * @param array $keyValuePairs An associative array of key-value pairs to set within the specified path.
+     * @return $this
+     */
+    public function setConfigPathValues(string $configPath, array $keyValuePairs): self
+    {
+        $config = &$GLOBALS['TYPO3_CONF_VARS'];
+
+        $configPath = explode('/', $configPath);
+
+        foreach ($configPath as $key => $value) {
+            if (!isset($config[$value])) {
+                $config[$value] = [];
+            }
+            $config = &$config[$value];
+        }
+
+        $config = array_replace_recursive($config, $keyValuePairs);
+
+        return $this;
+    }
+
 }
