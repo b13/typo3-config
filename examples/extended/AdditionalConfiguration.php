@@ -18,8 +18,8 @@ class ProjectConfig extends \B13\Config
         $GLOBALS['TYPO3_CONF_VARS']['LOG']['MyVendor']['MyPath']['writerConfiguration'] = [
             $logLevel => [
                 \TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
-                    'logFile' => $this->varPath . '/log/' . $fileName
-                ]
+                    'logFile' => $this->varPath . '/log/' . $fileName,
+                ],
             ],
         ];
         return $this;
