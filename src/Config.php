@@ -168,16 +168,16 @@ class Config
         $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'] = array_replace_recursive(
             [
                 LogLevel::DEBUG => [
-                    FileWriter::class => ['disabled' => true]
+                    FileWriter::class => ['disabled' => true],
                 ],
                 LogLevel::INFO => [
-                    FileWriter::class => ['disabled' => true]
+                    FileWriter::class => ['disabled' => true],
                 ],
                 LogLevel::WARNING => [
-                    FileWriter::class => ['disabled' => true]
+                    FileWriter::class => ['disabled' => true],
                 ],
                 LogLevel::ERROR => [
-                    FileWriter::class => ['disabled' => false]
+                    FileWriter::class => ['disabled' => false],
                 ],
             ],
             $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration']
@@ -196,7 +196,7 @@ class Config
         $this->enableDeprecationLogging();
         // Log warnings to files
         $GLOBALS['TYPO3_CONF_VARS']['LOG']['writerConfiguration'][LogLevel::WARNING] = [
-            FileWriter::class => ['disabled' => false]
+            FileWriter::class => ['disabled' => false],
         ];
         return $this;
     }
@@ -218,7 +218,7 @@ class Config
 
         $mailhogSmtpBindAddr = getenv('MH_SMTP_BIND_ADDR');
         if (is_string($mailhogSmtpBindAddr) && $mailhogSmtpBindAddr !== '') {
-            $this->useMailhog($mailhogSmtpBindAddr);
+            $this->useMailpit($mailhogSmtpBindAddr);
         }
 
         return $this;
@@ -240,7 +240,7 @@ class Config
         return $this;
     }
 
-    public function useMailhog(string $host = 'localhost', int $port = null): self
+    public function useMailpit(string $host = 'localhost', int $port = null): self
     {
         $GLOBALS['TYPO3_CONF_VARS']['MAIL']['transport'] = 'smtp';
         $GLOBALS['TYPO3_CONF_VARS']['MAIL']['transport_smtp_encrypt'] = '';
@@ -248,6 +248,11 @@ class Config
         $GLOBALS['TYPO3_CONF_VARS']['MAIL']['transport_smtp_server'] = $host . ($port ? ':' . (string)$port : '');
         $GLOBALS['TYPO3_CONF_VARS']['MAIL']['transport_smtp_username'] = '';
         return $this;
+    }
+
+    public function useMailhog(string $host = 'localhost', int $port = null): self
+    {
+        return $this->useMailpit($host, $port);
     }
 
     public function allowNoCacheQueryParameter(): self
@@ -277,6 +282,15 @@ class Config
     public function excludeQueryParameterForCacheHashCalculation(string $queryParameter): self
     {
         $GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = $queryParameter;
+        return $this;
+    }
+
+    public function excludeQueryParametersForCacheHashCalculation(array $queryParameters): self
+    {
+        $GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'] = array_merge(
+            $GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'],
+            $queryParameters
+        );
         return $this;
     }
 
@@ -319,8 +333,8 @@ class Config
         $GLOBALS['TYPO3_CONF_VARS']['LOG']['ApacheSolrForTypo3']['Solr']['writerConfiguration'] = [
             $logLevel => [
                 FileWriter::class => [
-                    'logFile' => $this->varPath . '/log/' . $fileName
-                ]
+                    'logFile' => $this->varPath . '/log/' . $fileName,
+                ],
             ],
         ];
         return $this;
@@ -339,6 +353,7 @@ class Config
     public function initializeRedisCaching(array $caches = null, string $redisHost = '127.0.0.1', int $redisStartDb = 0, int $redisPort = 6379, $alternativeCacheBackend = null): self
     {
         $isVersion9 = $this->version->getMajorVersion() === 9;
+        $isVersion12OrHigher = $this->version->getMajorVersion() >= 12;
         $cacheBackend = $alternativeCacheBackend ?? RedisBackend::class;
         $redisDb = $redisStartDb;
         $caches = $caches ?? [
@@ -348,13 +363,16 @@ class Config
                 ($isVersion9 ? 'cache_rootline' : 'rootline') => 86400*30,
                 ($isVersion9 ? 'cache_extbase' : 'extbase') => 0,
         ];
+        if ($isVersion12OrHigher) {
+            unset($caches['pagesection'], $caches['cache_pagesection']);
+        }
         foreach ($caches as $key => $lifetime) {
             $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations'][$key]['backend'] = $cacheBackend;
             $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations'][$key]['options'] = [
                 'database' => $redisDb++,
                 'hostname' => $redisHost,
                 'port' => $redisPort,
-                'defaultLifetime' => $lifetime
+                'defaultLifetime' => $lifetime,
             ];
         }
         return $this;
@@ -373,7 +391,7 @@ class Config
                 'cache_core',
                 'fluid_template',
                 'assets',
-                'l10n'
+                'l10n',
             ];
         foreach ($applyForCaches as $cacheName) {
             $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations'][$cacheName]['options']['cacheDirectory'] = $path;
