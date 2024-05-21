@@ -18,6 +18,8 @@ use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\Writer\FileWriter;
+use TYPO3\CMS\Core\Log\Writer\NullWriter;
+use TYPO3\CMS\Core\Utility\ArrayUtility;
 
 /**
  * Class to use in your configuration files of a TYPO3 project.
@@ -330,13 +332,39 @@ class Config
         } else {
             $logLevel = $this->context->isProduction() ? LogLevel::ERROR : LogLevel::DEBUG;
         }
-        $GLOBALS['TYPO3_CONF_VARS']['LOG']['ApacheSolrForTypo3']['Solr']['writerConfiguration'] = [
-            $logLevel => [
-                FileWriter::class => [
-                    'logFile' => $this->varPath . '/log/' . $fileName,
+        return $this->addFileLogger('ApacheSolrForTypo3\\Solr', $fileName, $logLevel);
+    }
+
+    public function addFileLogger(string $namespace, string $fileName = null, string $logLevel = null): self
+    {
+        $fileName = $fileName ?? strtolower(str_replace('\\', '_', $namespace)) . '.log';
+        if ($logLevel === null) {
+            $logLevel = $this->context->isProduction() ? LogLevel::ERROR : LogLevel::DEBUG;
+        }
+        $logFile = $this->varPath . '/log/' . $fileName;
+        $value = [
+            'writerConfiguration' => [
+                $logLevel => [
+                    FileWriter::class => [
+                        'logFile' => $logFile,
+                    ],
                 ],
             ],
         ];
+        $GLOBALS['TYPO3_CONF_VARS']['LOG'] = ArrayUtility::setValueByPath($GLOBALS['TYPO3_CONF_VARS']['LOG'], $namespace, $value, '\\');
+        return $this;
+    }
+
+    public function setNullLogger(string $namespace, string $logLevel = LogLevel::DEBUG): self
+    {
+        $value = [
+            'writerConfiguration' => [
+                $logLevel => [
+                    NullWriter::class => [],
+                ],
+            ],
+        ];
+        $GLOBALS['TYPO3_CONF_VARS']['LOG'] = ArrayUtility::setValueByPath($GLOBALS['TYPO3_CONF_VARS']['LOG'], $namespace, $value, '\\');
         return $this;
     }
 
