@@ -26,27 +26,12 @@ use TYPO3\CMS\Core\Utility\ArrayUtility;
  */
 class Config
 {
-    /**
-     * @var ApplicationContext
-     */
-    protected $context;
+    protected ApplicationContext $context;
+    protected Typo3Version $version;
+    protected string $configPath;
+    protected string $varPath;
+    protected bool $ddevEnvironment = false;
 
-    /**
-     * @var Typo3Version
-     */
-    protected $version;
-    /**
-     * @var string
-     */
-    protected $configPath;
-    /**
-     * @var string
-     */
-    protected $varPath;
-    /**
-     * @var bool
-     */
-    protected $ddevEnvironment = false;
     /**
      * @var Config
      */
@@ -62,7 +47,6 @@ class Config
     }
 
     /**
-     * @param bool $applyDefaults
      * @return static
      */
     public static function initialize(bool $applyDefaults = true): self
@@ -145,7 +129,7 @@ class Config
         return $this;
     }
 
-    public function initializeDatabaseConnection(array $options = null, $connectionName = 'Default'): self
+    public function initializeDatabaseConnection(?array $options = null, $connectionName = 'Default'): self
     {
         $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections'][$connectionName] = array_replace_recursive(
             $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections'][$connectionName],
@@ -203,7 +187,7 @@ class Config
         return $this;
     }
 
-    public function useDDEVConfiguration(string $dbHost = null): self
+    public function useDDEVConfiguration(?string $dbHost = null): self
     {
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['trustedHostsPattern'] = '.*.*';
         $this
@@ -242,7 +226,7 @@ class Config
         return $this;
     }
 
-    public function useMailpit(string $host = 'localhost', int $port = null): self
+    public function useMailpit(string $host = 'localhost', ?int $port = null): self
     {
         $GLOBALS['TYPO3_CONF_VARS']['MAIL']['transport'] = 'smtp';
         $GLOBALS['TYPO3_CONF_VARS']['MAIL']['transport_smtp_encrypt'] = '';
@@ -252,7 +236,7 @@ class Config
         return $this;
     }
 
-    public function useMailhog(string $host = 'localhost', int $port = null): self
+    public function useMailhog(string $host = 'localhost', ?int $port = null): self
     {
         return $this->useMailpit($host, $port);
     }
@@ -321,11 +305,9 @@ class Config
     /**
      * Configures a log file for solr based on the TYPO3 Context, with a separate file for solr.
      *
-     * @param string $fileName
-     * @param string|null $forceLogLevel
      * @return $this
      */
-    public function autoconfigureSolrLogging(string $fileName = 'solr.log', string $forceLogLevel = null): self
+    public function autoconfigureSolrLogging(string $fileName = 'solr.log', ?string $forceLogLevel = null): self
     {
         if ($forceLogLevel !== null) {
             $logLevel = $forceLogLevel;
@@ -335,7 +317,11 @@ class Config
         return $this->addFileLogger('ApacheSolrForTypo3\\Solr', $fileName, $logLevel);
     }
 
-    public function addFileLogger(string $namespace, string $fileName = null, string $logLevel = null): self
+    /**
+     * Shorthand function to add a file logger in a quick manner in the typical log folder.
+     * @return $this
+     */
+    public function addFileLogger(string $namespace, ?string $fileName = null, ?string $logLevel = null): self
     {
         $fileName = $fileName ?? strtolower(str_replace('\\', '_', $namespace)) . '.log';
         if ($logLevel === null) {
@@ -355,6 +341,10 @@ class Config
         return $this;
     }
 
+    /**
+     * Disable logging for a specific namespace.
+     * @return $this
+     */
     public function setNullLogger(string $namespace, string $logLevel = LogLevel::DEBUG): self
     {
         $value = [
@@ -378,18 +368,17 @@ class Config
      * @param null $alternativeCacheBackend alternative cache backend, useful if you use b13/graceful-caches
      * @return $this
      */
-    public function initializeRedisCaching(array $caches = null, string $redisHost = '127.0.0.1', int $redisStartDb = 0, int $redisPort = 6379, $alternativeCacheBackend = null): self
+    public function initializeRedisCaching(?array $caches = null, string $redisHost = '127.0.0.1', int $redisStartDb = 0, int $redisPort = 6379, $alternativeCacheBackend = null): self
     {
-        $isVersion9 = $this->version->getMajorVersion() === 9;
         $isVersion12OrHigher = $this->version->getMajorVersion() >= 12;
         $cacheBackend = $alternativeCacheBackend ?? RedisBackend::class;
         $redisDb = $redisStartDb;
         $caches = $caches ?? [
-                ($isVersion9 ? 'cache_pages' : 'pages') => 86400*30,
-                ($isVersion9 ? 'cache_pagesection' : 'pagesection') => 86400*30,
-                ($isVersion9 ? 'cache_hash' : 'hash') => 86400*30,
-                ($isVersion9 ? 'cache_rootline' : 'rootline') => 86400*30,
-                ($isVersion9 ? 'cache_extbase' : 'extbase') => 0,
+            'pages' => 86400 * 30,
+            'pagesection' => 86400 * 30,
+            'hash' => 86400 * 30,
+            'rootline' => 86400 * 30,
+            'extbase' => 0,
         ];
         if ($isVersion12OrHigher) {
             unset($caches['pagesection'], $caches['cache_pagesection']);
@@ -407,20 +396,20 @@ class Config
     }
 
     /**
-     * Useful for distributed systems to put caches outside of an NFS mount.
+     * Useful for distributed systems to put caches outside an NFS mount.
      *
      * @param string $path
      * @param array|null $applyForCaches
      * @return $this
      */
-    public function setAlternativeCachePath(string $path, array $applyForCaches = null): self
+    public function setAlternativeCachePath(string $path, ?array $applyForCaches = null): self
     {
         $applyForCaches = $applyForCaches ?? [
-                'cache_core',
-                'fluid_template',
-                'assets',
-                'l10n',
-            ];
+            'cache_core',
+            'fluid_template',
+            'assets',
+            'l10n',
+        ];
         foreach ($applyForCaches as $cacheName) {
             $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations'][$cacheName]['options']['cacheDirectory'] = $path;
         }
