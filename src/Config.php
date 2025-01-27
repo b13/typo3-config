@@ -426,4 +426,74 @@ class Config
         }
         return $this;
     }
+
+    /**
+     * Set PHP configuration settings.
+     *
+     * This method attempts to set PHP configuration settings using ini_set.
+     * If ini_set is disabled (e.g., due to server restrictions), the setting will not be applied,
+     * and a warning will be logged.
+     *
+     * Example:
+     * \B13\Config::get()->setPhpSettings([
+     *      'max_execution_time' => 1000,
+     *      'max_input_time' => 1000,
+     *      'post_max_size' => '100M',
+     *      'upload_max_filesize' => '100M',
+     * ]);
+     *
+     * @param array $settings An associative array of PHP settings.
+     * @return $this
+     */
+    public function setPhpSettings(array $settings): self
+    {
+        foreach ($settings as $key => $value) {
+            try {
+                if (function_exists('ini_set') && !ini_get($key)) {
+                    ini_set($key, $value);
+                } else {
+                    error_log("Unable to set PHP setting $key, ini_set is disabled or already set.");
+                }
+            } catch (\ErrorException $e) {
+                error_log("Error setting PHP configuration for $key: " . $e->getMessage());
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Override or append TYPO3 configuration settings for a given path with key-value pairs.
+     *
+     * Examples:
+     * \B13\Config::get()->setConfigPathValues('EXTENSIONS/alterations', ['just-a-test' => 'test']);
+     * \B13\Config::get()->setConfigPathValues(
+     *   'SYS',
+     *   [
+     *      'just-a-test' => 'test',
+     *      'defaultScheme' => 'https'
+     *   ]);
+     *
+     * @param string $configPath A string representing the path to the configuration option.
+     * @param array $keyValuePairs An associative array of key-value pairs to set within the specified path.
+     * @return $this
+     */
+    public function setConfigPathValues(string $configPath, array $keyValuePairs): self
+    {
+        $config = &$GLOBALS['TYPO3_CONF_VARS'];
+
+        $configPath = explode('/', $configPath);
+
+        foreach ($configPath as $key => $value) {
+            if (!isset($config[$value])) {
+                $config[$value] = [];
+            }
+            $config = &$config[$value];
+        }
+
+        $config = array_replace_recursive($config, $keyValuePairs);
+
+        return $this;
+    }
+
 }
