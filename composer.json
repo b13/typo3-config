@@ -3,13 +3,13 @@
   "description": "Fluent API to set environment-specific configuration for TYPO3",
   "license": "GPL-2.0+",
   "require": {
-    "php": "^7.2 || ~8.0",
-    "typo3/cms-core": "^9.5.14 || ^10.0.0 || ^11.0.0 || ^12.0.0 || ^13.0.0"
+    "php": "^8.0",
+    "typo3/cms-core": "^11.0.0 || ^12.0.0 || ^13.0.0"
   },
   "autoload": {
     "classmap": ["src/"]
   },
   "require-dev": {
-    "typo3/coding-standards": "^0.6"
+    "typo3/coding-standards": "^0.8"
   }
 }
