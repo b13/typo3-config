@@ -196,7 +196,7 @@ class Config
                     'dbname' => 'db',
                     'host' => $dbHost ?? ('ddev-' . getenv('DDEV_PROJECT') . '-db'),
                     'password' => 'db',
-                    'port' => '3306',
+                    'port' => 3306,
                     'user' => 'db',
                 ]
             )
