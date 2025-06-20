@@ -368,18 +368,22 @@ class Config
      * @param null $alternativeCacheBackend alternative cache backend, useful if you use b13/graceful-caches
      * @return $this
      */
-    public function initializeRedisCaching(?array $caches = null, string $redisHost = '127.0.0.1', int $redisStartDb = 0, int $redisPort = 6379, $alternativeCacheBackend = null): self
+    public function initializeRedisCaching(?array $caches = null, string $redisHost = '127.0.0.1', int $redisStartDb = 0, int $redisPort = 6379, $alternativeCacheBackend = null, array $additionalCaches = []): self
     {
         $isVersion12OrHigher = $this->version->getMajorVersion() >= 12;
         $cacheBackend = $alternativeCacheBackend ?? RedisBackend::class;
         $redisDb = $redisStartDb;
-        $caches = $caches ?? [
-            'pages' => 86400 * 30,
-            'pagesection' => 86400 * 30,
-            'hash' => 86400 * 30,
-            'rootline' => 86400 * 30,
-            'extbase' => 0,
-        ];
+        $caches = array_merge(
+            $caches ?? [
+                'pages' => 86400 * 30,
+                'pagesection' => 86400 * 30,
+                'hash' => 86400 * 30,
+                'rootline' => 86400 * 30,
+                'extbase' => 0,
+            ], 
+            $additionalCaches
+        );
+
         if ($isVersion12OrHigher) {
             unset($caches['pagesection'], $caches['cache_pagesection']);
         }
